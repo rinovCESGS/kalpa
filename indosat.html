@@ -1590,14 +1590,17 @@ body.method-view .app { display:none; }
 
 <script>
 // ── CONSTANTS ───────────────────────────────────────────────────────────────
-// Titik BTS: warna tetap (hitam), radius kecil agar peta bahaya tetap terbaca.
+// Titik BTS: warna mengikuti hazard level (HAZARD_COLORS), radius kecil agar
+// peta bahaya di bawahnya tetap terbaca. Naikkan strokeWeight ke 0.5-0.7 bila
+// titik tenggelam di atas raster beramp oranye/cokelat.
 const BTS_DOT = {
-  color: '#0b1020',
-  flat: 1.2,          // radius BTS tanpa bahaya
-  min: 1.6,           // radius minimum BTS terdampak
-  max: 4.0,           // radius maksimum (kerugian tertinggi)
-  opacity: 0.88,
-  opacityFlat: 0.32
+  flat: 1.2,                    // radius BTS tanpa bahaya
+  min: 1.6,                     // radius minimum BTS terdampak
+  max: 4.0,                     // radius maksimum (kerugian tertinggi)
+  opacity: 0.9,
+  opacityFlat: 0.32,
+  stroke: 'rgba(15,23,42,0.65)', // warna garis tepi tipis
+  strokeWeight: 0                // 0 = tanpa garis tepi
 };
 const HAZARD_COLORS = {
   'Very High': '#dc2626',
@@ -1968,12 +1971,13 @@ function renderMap() {
 
   for (const d of filteredData) {
     const noHaz  = d.combo.hl === 'No Hazard';
+    const color  = HAZARD_COLORS[d.combo.hl] || '#4b5563';
     const r = noHaz ? BTS_DOT.flat : BTS_DOT.min + (d.loss/maxLoss)*(BTS_DOT.max - BTS_DOT.min);
     const op = noHaz ? BTS_DOT.opacityFlat : BTS_DOT.opacity;
 
     const m = L.circleMarker([d.lat, d.lon], {
-      radius: r, fillColor: BTS_DOT.color,
-      color: 'transparent', weight: 0, fillOpacity: op
+      radius: r, fillColor: color,
+      color: BTS_DOT.stroke, weight: BTS_DOT.strokeWeight, fillOpacity: op
     });
     m._btsData = d;
 
@@ -2000,7 +2004,7 @@ function renderMap() {
         </div>`).openOn(map);
     });
     m.on('mouseout', function() {
-      this.setStyle({ weight: 0, color: 'transparent', fillOpacity: noHaz ? BTS_DOT.opacityFlat : BTS_DOT.opacity });
+      this.setStyle({ weight: BTS_DOT.strokeWeight, color: BTS_DOT.stroke, fillOpacity: noHaz ? BTS_DOT.opacityFlat : BTS_DOT.opacity });
       map.closePopup();
     });
     m.on('click', () => { showDetail(d); });
